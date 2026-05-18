@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barbearia Junim - Status</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(15, 15, 15, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .video-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100vw;
+            min-height: 100vh;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+            filter: brightness(0.25) contrast(1.1);
+        }
+
+        .fade-transition {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hidden-state {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            pointer-events: none;
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .active-state {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            position: relative;
+            visibility: visible;
+        }
+        
+        @keyframes pulse-number {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); color: #fff; text-shadow: 0 0 25px rgba(255,255,255,0.6); }
+            100% { transform: scale(1); }
+        }
+        .animate-number {
+            animation: pulse-number 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="text-white h-screen w-screen flex flex-col items-center justify-center p-4">
+
+    <video autoplay loop muted playsinline class="video-bg">
+        <source src="https://cdn.pixabay.com/video/2016/11/21/6462-192534568_large.mp4" type="video/mp4">
+    </video>
+
+    <div class="glass-card w-full max-w-sm rounded-[2rem] p-8 text-center flex flex-col items-center justify-center relative overflow-hidden flex-grow-0 mb-8 mt-4 shadow-2xl">
+        
+        <div class="mb-8 flex flex-col items-center w-full">
+            <div class="bg-white/10 p-4 rounded-full mb-4 backdrop-blur-md border border-white/5 shadow-lg">
+                <i class="ph ph-scissors text-4xl text-gray-200"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-widest uppercase text-white drop-shadow-md">
+                Barbearia<br>
+                <span class="text-emerald-400 font-black text-3xl sm:text-4xl mt-1 block">Junim</span>
+            </h1>
+            <div class="h-1 w-16 bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-600 rounded mt-4 opacity-80"></div>
+        </div>
+
+        <div id="state-open" class="w-full fade-transition hidden-state flex flex-col items-center">
+            <h2 class="text-sm text-gray-400 font-semibold mb-2 uppercase tracking-widest">Fila Atual</h2>
+            
+            <div class="bg-black/40 border border-white/10 rounded-3xl w-full py-6 my-2 shadow-inner">
+                <div class="text-7xl leading-none font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]" id="contador-clientes">
+                    --
+                </div>
+                <p class="text-gray-400 text-xs mt-2 uppercase tracking-wider font-bold" id="texto-clientes">Aguardando</p>
+            </div>
+            
+            <div class="flex items-center gap-2 text-emerald-400 mt-6 bg-emerald-400/10 px-5 py-2.5 rounded-full border border-emerald-400/20 backdrop-blur-md shadow-[0_0_15px_rgba(52,211,153,0.15)]">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#34d399]"></span>
+                </span>
+                <span class="font-bold tracking-widest text-[11px] uppercase">Tempo Real</span>
+            </div>
+        </div>
+
+        <div id="state-lunch" class="w-full fade-transition hidden-state flex flex-col items-center">
+            <div class="bg-orange-500/20 p-5 rounded-full mb-4 border border-orange-500/30">
+                <i class="ph ph-hamburger text-6xl text-orange-400 animate-bounce"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2 uppercase tracking-wide">Pausa para Almoço</h2>
+            <p class="text-sm text-gray-300 font-light px-2">Nossa equipe está recarregando as energias.</p>
+            <p class="text-sm text-orange-300 font-bold mt-3 bg-orange-500/10 px-4 py-2 rounded-lg border border-orange-500/20">Voltamos em breve!</p>
+        </div>
+
+        <div id="state-closed" class="w-full fade-transition hidden-state flex flex-col items-center">
+            <div class="bg-blue-500/20 p-5 rounded-full mb-4 border border-blue-500/30">
+                <i class="ph-fill ph-moon-stars text-6xl text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2 uppercase tracking-wide">Fechado</h2>
+            <p class="text-sm text-gray-300 font-light px-2" id="motivo-fechado">Fora do horário de expediente.</p>
+            
+            <div class="mt-6 px-4 py-3 bg-black/40 border border-white/5 rounded-xl w-full">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Horários</p>
+                <p class="text-xs text-gray-300 leading-relaxed">Seg a Sex: 09:30 às 18:30<br>Sábado: 09:30 às 20:00</p>
+            </div>
+        </div>
+
+        <div id="state-sunday" class="w-full fade-transition hidden-state flex flex-col items-center">
+            <div class="relative mb-5">
+                <div class="absolute inset-0 bg-purple-500 blur-[25px] opacity-50 rounded-full"></div>
+                <div class="bg-purple-900/50 p-4 rounded-full relative z-10 border border-purple-400/30">
+                    <i class="ph-fill ph-ice-cream text-6xl text-purple-300 animate-pulse"></i>
+                </div>
+            </div>
+            
+            <h2 class="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                Bom Domingo!
+            </h2>
+            <p class="text-sm text-gray-300 mb-6 font-light px-2 leading-relaxed">
+                Hoje estamos recarregando as tesouras. Que tal aproveitar o dia com o melhor Açaí da cidade?
+            </p>
+            
+            <a href="https://instagram.com/urban_acaii" target="_blank" class="group flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white px-6 py-3.5 rounded-xl font-bold text-lg transition-all duration-300 active:scale-95 shadow-[0_8px_20px_rgba(168,85,247,0.4)] w-full">
+                <i class="ph ph-instagram-logo text-2xl"></i>
+                @urban_acaii
+            </a>
+        </div>
+
+        <div id="state-error" class="w-full fade-transition hidden-state flex flex-col items-center">
+            <div class="bg-red-500/20 p-4 rounded-full mb-4 border border-red-500/30">
+                <i class="ph ph-wifi-slash text-5xl text-red-400 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Conectando...</h2>
+            <p class="text-gray-400 text-sm">Buscando informações da barbearia.</p>
+        </div>
+
+    </div>
+
+    <div class="mt-auto mb-4 text-center">
+        <div id="relogio" class="text-3xl font-black text-white tracking-widest drop-shadow-md">00:00</div>
+        <div id="data-atual" class="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-[0.2em]">--</div>
+    </div>
+
+    <script>
+        
+        // =====================================================================
+        // O LINK DA SUA PLANILHA
+        // =====================================================================
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/1J_zE2x7lo62wlzClB2nGBNAxCDGpj2G9TKgWgLnSOyU/export?format=csv"; 
+        
+        const states = {
+            open: document.getElementById('state-open'),
+            lunch: document.getElementById('state-lunch'),
+            closed: document.getElementById('state-closed'),
+            sunday: document.getElementById('state-sunday'),
+            error: document.getElementById('state-error')
+        };
+        const elContador = document.getElementById('contador-clientes');
+        const elTextoClientes = document.getElementById('texto-clientes');
+        let ultimaQtd = null;
+
+        function atualizarRelogio() {
+            const agora = new Date();
+            const horas = String(agora.getHours()).padStart(2, '0');
+            const minutos = String(agora.getMinutes()).padStart(2, '0');
+            document.getElementById('relogio').textContent = `${horas}:${minutos}`;
+            
+            const opcoesData = { weekday: 'long', day: '2-digit', month: 'long' };
+            let dataFormatada = agora.toLocaleDateString('pt-BR', opcoesData);
+            dataFormatada = dataFormatada.replace('-feira', '');
+            document.getElementById('data-atual').textContent = dataFormatada;
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
+
+        function showState(stateName) {
+            Object.keys(states).forEach(key => {
+                if(key === stateName) {
+                    states[key].classList.remove('hidden-state');
+                    states[key].classList.add('active-state');
+                } else {
+                    states[key].classList.remove('active-state');
+                    states[key].classList.add('hidden-state');
+                }
+            });
+        }
+
+        function checkBusinessRules() {
+            const now = new Date();
+            const day = now.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+            const hour = now.getHours();
+            const minutes = now.getMinutes();
+            // Converte hora para float (ex: 9:30 vira 9.5)
+            const timeFloat = hour + (minutes / 60);
+
+            // Regra 1: Domingo (Açaí)
+            if (day === 0) {
+                return { status: 'SUNDAY' };
+            }
+            
+            // Regra 2: Antes das 09:30 (Todos os dias operacionais)
+            if (timeFloat < 9.5) {
+                return { status: 'CLOSED', msg: 'Iniciamos o expediente às 09:30.' };
+            }
+            
+            // Regra 3: Sábado depois das 20:00
+            if (day === 6 && timeFloat >= 20.0) {
+                return { status: 'CLOSED', msg: 'Nosso expediente de sábado já encerrou.' };
+            }
+            
+            // Regra 4: Segunda a Sexta depois das 18:30
+            if (day >= 1 && day <= 5 && timeFloat >= 18.5) {
+                return { status: 'CLOSED', msg: 'Nosso expediente de hoje já encerrou.' };
+            }
+            
+            // Se passou por tudo, está ABERTO.
+            return { status: 'OPEN' };
+        }
+
+        async function fetchGoogleSheetsData() {
+            try {
+                // Adiciona timestamp para evitar cache no celular
+                const response = await fetch(`${CSV_URL}&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error("Erro na rede");
+                
+                const csvText = await response.text();
+                
+                // Quebra o texto em linhas e remove as vazias
+                const linhas = csvText.split('\n')
+                    .map(l => l.trim())
+                    .filter(l => l.replace(/,/g, '').replace(/;/g, '').trim() !== ''); 
+                    // Isso garante que ele ignore linhas em branco na planilha
+                
+                if (linhas.length === 0) return null;
+
+                // Pega a primeira linha válida de dados (que é onde está o "trabalho" e o "2")
+                const linhaDados = linhas[0];
+                const separador = linhaDados.includes(';') ? ';' : ',';
+                let valores = linhaDados.split(separador).map(v => v ? v.replace(/^"|"$/g, '').trim() : '');
+
+                // Na sua planilha, a coluna A (índice 0) é o modo, e a coluna B (índice 1) é a quantidade
+                return {
+                    modo: (valores[0] || 'trabalho').toLowerCase(),
+                    qtd: parseInt(valores[1]) || 0
+                };
+
+            } catch (error) {
+                console.error("Erro ao ler planilha:", error);
+                return null;
+            }
+        }
+
+        async function updateDashboard() {
+            const rules = checkBusinessRules();
+
+            if (rules.status === 'SUNDAY') {
+                showState('sunday');
+                return;
+            }
+            if (rules.status === 'CLOSED') {
+                document.getElementById('motivo-fechado').textContent = rules.msg;
+                showState('closed');
+                return;
+            }
+
+            const dadosNuvem = await fetchGoogleSheetsData();
+
+            if (!dadosNuvem) {
+                showState('error');
+                return;
+            }
+
+            if (dadosNuvem.modo === 'almoco') {
+                showState('lunch');
+                return;
+            }
+
+            // MODO TRABALHO NORMAL
+            const qtd = dadosNuvem.qtd;
+            const txtQtd = String(qtd).padStart(2, '0');
+            
+            if (qtd === 0) {
+                elTextoClientes.textContent = "Barbearia Vazia";
+            } else if (qtd === 1) {
+                elTextoClientes.textContent = "Cliente Aguardando";
+            } else {
+                elTextoClientes.textContent = "Clientes Aguardando";
+            }
+            
+            if (ultimaQtd !== null && ultimaQtd !== qtd) {
+                elContador.textContent = txtQtd;
+                elContador.classList.remove('animate-number');
+                void elContador.offsetWidth;
+                elContador.classList.add('animate-number');
+            } else {
+                elContador.textContent = txtQtd;
+            }
+            
+            ultimaQtd = qtd;
+            showState('open');
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 5000); 
+    </script>
+</body>
+</html>
