@@ -395,7 +395,7 @@
 
             if (day === 0) return { status: 'SUNDAY' };
             if (timeFloat < 9.5) return { status: 'CLOSED', msg: 'Iniciamos o expediente às 09:30.' };
-            if (day >= 1 && day <= 6 && timeFloat >= 20.0) return { status: 'CLOSED', msg: 'Nosso expediente de hoje já encerrou.' };
+            if (day >= 1 && day <= 6 && timeFloat >= 19.0) return { status: 'CLOSED', msg: 'Nosso expediente de hoje já encerrou.' };
             
             return { status: 'OPEN' };
         }
