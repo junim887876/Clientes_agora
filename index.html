@@ -65,6 +65,7 @@
             pointer-events: none;
             position: absolute;
             visibility: hidden;
+            display: none;
         }
 
         .active-state {
@@ -72,6 +73,7 @@
             transform: scale(1) translateY(0);
             position: relative;
             visibility: visible;
+            display: flex;
         }
     </style>
 </head>
@@ -93,7 +95,7 @@
         </div>
 
         <!-- ESTADO: ABERTO / TRABALHO -->
-        <div id="state-open" class="w-full fade-transition hidden-state flex flex-col items-center">
+        <div id="state-open" class="w-full fade-transition hidden-state flex-col items-center">
             <h2 class="text-xs sm:text-sm text-gray-300 font-semibold mb-2 uppercase tracking-widest drop-shadow-md">Fila Atual</h2>
             <div class="bg-black/50 border border-white/20 rounded-3xl w-full py-4 my-2 shadow-inner backdrop-blur-sm">
                 <div class="text-6xl sm:text-7xl leading-none font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" id="contador-clientes">--</div>
@@ -102,7 +104,7 @@
         </div>
 
         <!-- ESTADO: ALMOÇO -->
-        <div id="state-lunch" class="w-full fade-transition hidden-state flex flex-col items-center">
+        <div id="state-lunch" class="w-full fade-transition hidden-state flex-col items-center">
             <div class="bg-orange-500/30 p-4 rounded-full mb-3 border border-orange-500/40 backdrop-blur-sm">
                 <i class="ph ph-hamburger text-5xl text-orange-400 animate-bounce drop-shadow-md"></i>
             </div>
@@ -119,6 +121,7 @@
         </div>
     </div>
 
+    <!-- RELÓGIO E DATA ATUALIZADOS -->
     <div class="mt-auto mb-2 text-center bg-black/30 px-6 py-2 rounded-2xl backdrop-blur-sm border border-white/10">
         <div id="relogio" class="text-3xl sm:text-4xl font-black text-white tracking-widest drop-shadow-lg">00:00</div>
         <div id="data-atual" class="text-[9px] sm:text-[10px] text-gray-300 font-bold uppercase mt-1 tracking-[0.2em] drop-shadow-md">--</div>
@@ -198,13 +201,15 @@
             const stateLunch = document.getElementById('state-lunch');
             const contador = document.getElementById('contador-clientes');
 
+            // Exibe a quantidade atualizada no elemento correspondente
+            contador.innerText = isNaN(quantidade) ? 0 : quantidade;
+
             if (status.includes("almoc") || status.includes("almoço")) {
-                stateOpen.className = "w-full fade-transition hidden-state flex flex-col items-center";
-                stateLunch.className = "w-full fade-transition active-state flex flex-col items-center";
+                stateOpen.className = "w-full fade-transition hidden-state flex-col items-center";
+                stateLunch.className = "w-full fade-transition active-state flex-col items-center";
             } else {
-                stateLunch.className = "w-full fade-transition hidden-state flex flex-col items-center";
-                stateOpen.className = "w-full fade-transition active-state flex flex-col items-center";
-                contador.innerText = quantidade;
+                stateLunch.className = "w-full fade-transition hidden-state flex-col items-center";
+                stateOpen.className = "w-full fade-transition active-state flex-col items-center";
             }
         }
 
@@ -246,13 +251,18 @@
             }
         }
 
+        // Atualização de Relógio e Data em tempo real
         setInterval(() => {
             const agora = new Date();
             const horas = String(agora.getHours()).padStart(2, '0');
             const minutos = String(agora.getMinutes()).padStart(2, '0');
             document.getElementById('relogio').innerText = `${horas}:${minutos}`;
+
+            const opcoesData = { weekday: 'short', day: '2-digit', month: 'short' };
+            document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR', opcoesData).toUpperCase();
         }, 1000);
 
+        // Busca inicial e loop de atualização a cada 10 segundos
         setInterval(buscarStatusPlanilha, 10000);
         buscarStatusPlanilha();
     </script>
