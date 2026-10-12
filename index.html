@@ -58,23 +58,6 @@
         .fade-transition {
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .hidden-state {
-            opacity: 0;
-            transform: scale(0.95) translateY(10px);
-            pointer-events: none;
-            position: absolute;
-            visibility: hidden;
-            display: none;
-        }
-
-        .active-state {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            position: relative;
-            visibility: visible;
-            display: flex;
-        }
     </style>
 </head>
 <body class="text-white min-h-[100svh] w-screen flex flex-col items-center justify-center p-2 sm:p-4 relative">
@@ -95,16 +78,16 @@
         </div>
 
         <!-- ESTADO: ABERTO / TRABALHO -->
-        <div id="state-open" class="w-full fade-transition hidden-state flex-col items-center">
+        <div id="state-open" class="w-full fade-transition flex flex-col items-center">
             <h2 class="text-xs sm:text-sm text-gray-300 font-semibold mb-2 uppercase tracking-widest drop-shadow-md">Fila Atual</h2>
             <div class="bg-black/50 border border-white/20 rounded-3xl w-full py-4 my-2 shadow-inner backdrop-blur-sm">
-                <div class="text-6xl sm:text-7xl leading-none font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" id="contador-clientes">--</div>
+                <div class="text-6xl sm:text-7xl leading-none font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" id="contador-clientes">0</div>
                 <p class="text-gray-300 text-[10px] sm:text-xs mt-2 uppercase tracking-wider font-bold">Clientes Aguardando</p>
             </div>
         </div>
 
-        <!-- ESTADO: ALMOÇO -->
-        <div id="state-lunch" class="w-full fade-transition hidden-state flex-col items-center">
+        <!-- ESTADO: ALMOÇO (Oculto por padrão) -->
+        <div id="state-lunch" class="w-full fade-transition hidden flex-col items-center">
             <div class="bg-orange-500/30 p-4 rounded-full mb-3 border border-orange-500/40 backdrop-blur-sm">
                 <i class="ph ph-hamburger text-5xl text-orange-400 animate-bounce drop-shadow-md"></i>
             </div>
@@ -168,7 +151,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7qDJ1W8rsqIg-2iqFvNbPi32FB6FvMyiGwMceChlPruLVKRlXxbF_891eAAxFnNHX/exec";
 
         async function abrirModalAlerta() {
             window.OneSignalDeferred.push(async function(OneSignal) {
@@ -182,9 +165,8 @@
         }
 
         async function buscarStatusPlanilha() {
-            if (WEB_APP_URL === "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") return;
             try {
-                const response = await fetch(WEB_APP_URL + "?action=getStatus");
+                const response = await fetch(WEB_APP_URL + "?action=getStatus", { cache: "no-store" });
                 const data = await response.json();
                 
                 const statusA2 = String(data.status || "").trim().toLowerCase();
@@ -201,15 +183,18 @@
             const stateLunch = document.getElementById('state-lunch');
             const contador = document.getElementById('contador-clientes');
 
-            // Exibe a quantidade atualizada no elemento correspondente
             contador.innerText = isNaN(quantidade) ? 0 : quantidade;
 
             if (status.includes("almoc") || status.includes("almoço")) {
-                stateOpen.className = "w-full fade-transition hidden-state flex-col items-center";
-                stateLunch.className = "w-full fade-transition active-state flex-col items-center";
+                stateOpen.classList.add('hidden');
+                stateOpen.classList.remove('flex');
+                stateLunch.classList.remove('hidden');
+                stateLunch.classList.add('flex');
             } else {
-                stateLunch.className = "w-full fade-transition hidden-state flex-col items-center";
-                stateOpen.className = "w-full fade-transition active-state flex-col items-center";
+                stateLunch.classList.add('hidden');
+                stateLunch.classList.remove('flex');
+                stateOpen.classList.remove('hidden');
+                stateOpen.classList.add('flex');
             }
         }
 
@@ -251,7 +236,7 @@
             }
         }
 
-        // Atualização de Relógio e Data em tempo real
+        // Relógio e Data em tempo real
         setInterval(() => {
             const agora = new Date();
             const horas = String(agora.getHours()).padStart(2, '0');
@@ -262,9 +247,11 @@
             document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR', opcoesData).toUpperCase();
         }, 1000);
 
-        // Busca inicial e loop de atualização a cada 10 segundos
-        setInterval(buscarStatusPlanilha, 10000);
+        // Executa a busca imediatamente ao abrir a página
         buscarStatusPlanilha();
+
+        // Atualização contínua a cada 3 segundos (muito mais rápido)
+        setInterval(buscarStatusPlanilha, 3000);
     </script>
 </body>
 </html>
