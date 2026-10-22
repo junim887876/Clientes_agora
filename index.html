@@ -96,8 +96,26 @@
             <p class="text-xs sm:text-sm text-orange-300 font-bold mt-3 bg-black/40 px-4 py-2 rounded-lg border border-orange-500/30">Voltamos em breve!</p>
         </div>
 
+        <!-- ESTADO: FECHADO / FACULDADE / DOMINGO (Oculto por padrão) -->
+        <div id="state-closed" class="w-full fade-transition hidden flex-col items-center">
+            <div id="closed-icon-container" class="bg-red-500/30 p-4 rounded-full mb-3 border border-red-500/40 backdrop-blur-sm">
+                <i id="closed-icon" class="ph ph-door-closed text-5xl text-red-400 drop-shadow-md"></i>
+            </div>
+            <h2 id="closed-title" class="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-wide drop-shadow-md">Barbearia Fechada</h2>
+            <p id="closed-desc" class="text-xs sm:text-sm text-white font-medium px-2 drop-shadow-md">Estamos fora do horário de atendimento.</p>
+            
+            <div id="closed-badge" class="mt-3">
+                <p id="closed-badge-text" class="text-xs sm:text-sm text-red-300 font-bold bg-black/40 px-4 py-2 rounded-lg border border-red-500/30">Abre às 09:30</p>
+            </div>
+
+            <!-- Botão especial do Açaí no Domingo -->
+            <a id="btn-acai" href="https://www.instagram.com/urban_acaii" target="_blank" rel="noopener noreferrer" class="hidden mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg border border-purple-400/40 items-center justify-center gap-2 transition-all active:scale-95">
+                <i class="ph ph-instagram-logo text-lg"></i> Ir para @urban_acaii
+            </a>
+        </div>
+
         <!-- BOTÃO DE ALERTA -->
-        <div class="w-full mt-3 pt-3 border-t border-white/10 flex flex-col items-center z-20">
+        <div id="container-btn-alerta" class="w-full mt-3 pt-3 border-t border-white/10 flex flex-col items-center z-20">
             <button onclick="abrirModalAlerta()" class="w-full bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl backdrop-blur-md border border-emerald-400/30 shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="ph ph-bell-ringing text-sm"></i> Me avise quando liberar a fila
             </button>
@@ -175,26 +193,107 @@
                 atualizarInterface(statusA2, qtdB2);
             } catch (e) {
                 console.error("Erro ao buscar dados da planilha:", e);
+                // Mesmo com erro de requisição, aplica a verificação de horário local
+                atualizarInterface("", 0);
             }
         }
 
         function atualizarInterface(status, quantidade) {
             const stateOpen = document.getElementById('state-open');
             const stateLunch = document.getElementById('state-lunch');
+            const stateClosed = document.getElementById('state-closed');
             const contador = document.getElementById('contador-clientes');
+            const btnAlerta = document.getElementById('container-btn-alerta');
+
+            const closedIconContainer = document.getElementById('closed-icon-container');
+            const closedIcon = document.getElementById('closed-icon');
+            const closedTitle = document.getElementById('closed-title');
+            const closedDesc = document.getElementById('closed-desc');
+            const closedBadgeText = document.getElementById('closed-badge-text');
+            const btnAcai = document.getElementById('btn-acai');
 
             contador.innerText = isNaN(quantidade) ? 0 : quantidade;
 
-            if (status.includes("almoc") || status.includes("almoço")) {
-                stateOpen.classList.add('hidden');
-                stateOpen.classList.remove('flex');
-                stateLunch.classList.remove('hidden');
-                stateLunch.classList.add('flex');
+            // Verificação de Horário e Dia
+            const agora = new Date();
+            const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+            const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+
+            const minAbertura = 9 * 60 + 30; // 09:30 -> 570 minutos
+            const minFechamentoSemana = 18 * 60 + 30; // 18:30 -> 1110 minutos
+            const minFechamentoSabado = 20 * 60; // 20:00 -> 1200 minutos
+
+            let estaFechado = false;
+            let motivoFechado = "";
+
+            if (diaSemana === 0) { // DOMINGO
+                estaFechado = true;
+                motivoFechado = "domingo";
+            } else if (diaSemana >= 1 && diaSemana <= 5) { // SEGUNDA A SEXTA
+                if (minutosAtuais < minAbertura || minutosAtuais >= minFechamentoSemana) {
+                    estaFechado = true;
+                    motivoFechado = minutosAtuais >= minFechamentoSemana ? "faculdade" : "fora_horario";
+                }
+            } else if (diaSemana === 6) { // SÁBADO
+                if (minutosAtuais < minAbertura || minutosAtuais >= minFechamentoSabado) {
+                    estaFechado = true;
+                    motivoFechado = "fora_horario";
+                }
+            }
+
+            // Oculta todas as seções inicialmente
+            stateOpen.classList.add('hidden');
+            stateOpen.classList.remove('flex');
+            stateLunch.classList.add('hidden');
+            stateLunch.classList.remove('flex');
+            stateClosed.classList.add('hidden');
+            stateClosed.classList.remove('flex');
+
+            if (estaFechado) {
+                // Esconde botão de alerta quando fechado
+                btnAlerta.classList.add('hidden');
+                stateClosed.classList.remove('hidden');
+                stateClosed.classList.add('flex');
+
+                if (motivoFechado === "domingo") {
+                    closedIconContainer.className = "bg-purple-500/30 p-4 rounded-full mb-3 border border-purple-500/40 backdrop-blur-sm";
+                    closedIcon.className = "ph ph-bowl-food text-5xl text-purple-400 drop-shadow-md";
+                    closedTitle.innerText = "Barbearia Fechada";
+                    closedDesc.innerText = "Mas estamos vendendo açaí na Urban Açaí!";
+                    closedBadgeText.className = "text-xs sm:text-sm text-purple-300 font-bold bg-black/40 px-4 py-2 rounded-lg border border-purple-500/30";
+                    closedBadgeText.innerText = "Aproveite o Domingo!";
+                    btnAcai.classList.remove('hidden');
+                    btnAcai.classList.add('flex');
+                } else if (motivoFechado === "faculdade") {
+                    closedIconContainer.className = "bg-indigo-500/30 p-4 rounded-full mb-3 border border-indigo-500/40 backdrop-blur-sm";
+                    closedIcon.className = "ph ph-graduation-cap text-5xl text-indigo-400 drop-shadow-md";
+                    closedTitle.innerText = "Fechado p/ Faculdade";
+                    closedDesc.innerText = "Encerrámos os atendimentos por hoje devido ao horário de aula.";
+                    closedBadgeText.className = "text-xs sm:text-sm text-indigo-300 font-bold bg-black/40 px-4 py-2 rounded-lg border border-indigo-500/30";
+                    closedBadgeText.innerText = "Voltamos amanhã às 09:30!";
+                    btnAcai.classList.add('hidden');
+                    btnAcai.classList.remove('flex');
+                } else { // fora_horario
+                    closedIconContainer.className = "bg-red-500/30 p-4 rounded-full mb-3 border border-red-500/40 backdrop-blur-sm";
+                    closedIcon.className = "ph ph-door-closed text-5xl text-red-400 drop-shadow-md";
+                    closedTitle.innerText = "Barbearia Fechada";
+                    closedDesc.innerText = "Estamos fora do nosso horário de funcionamento.";
+                    closedBadgeText.className = "text-xs sm:text-sm text-red-300 font-bold bg-black/40 px-4 py-2 rounded-lg border border-red-500/30";
+                    closedBadgeText.innerText = "Abre às 09:30";
+                    btnAcai.classList.add('hidden');
+                    btnAcai.classList.remove('flex');
+                }
             } else {
-                stateLunch.classList.add('hidden');
-                stateLunch.classList.remove('flex');
-                stateOpen.classList.remove('hidden');
-                stateOpen.classList.add('flex');
+                // Durante horário aberto, verifica se está em horário de Almoço na planilha
+                btnAlerta.classList.remove('hidden');
+
+                if (status.includes("almoc") || status.includes("almoço")) {
+                    stateLunch.classList.remove('hidden');
+                    stateLunch.classList.add('flex');
+                } else {
+                    stateOpen.classList.remove('hidden');
+                    stateOpen.classList.add('flex');
+                }
             }
         }
 
@@ -250,7 +349,7 @@
         // Executa a busca imediatamente ao abrir a página
         buscarStatusPlanilha();
 
-        // Atualização contínua a cada 3 segundos (muito mais rápido)
+        // Atualização contínua a cada 3 segundos
         setInterval(buscarStatusPlanilha, 3000);
     </script>
 </body>
