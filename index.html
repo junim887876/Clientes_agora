@@ -171,10 +171,39 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7qDJ1W8rsqIg-2iqFvNbPi32FB6FvMyiGwMceChlPruLVKRlXxbF_891eAAxFnNHX/exec";
 
-        async function abrirModalAlerta() {
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.Notifications.requestPermission();
+        async function obterPushIdOneSignal() {
+            return new Promise((resolve) => {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try {
+                        let id = await OneSignal.User.PushSubscription.id;
+                        resolve(id || "");
+                    } catch (e) {
+                        resolve("");
+                    }
+                });
             });
+        }
+
+        async function abrirModalAlerta() {
+            let permissaoConcedida = false;
+
+            await new Promise((resolve) => {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try {
+                        const resultado = await OneSignal.Notifications.requestPermission();
+                        permissaoConcedida = (resultado === true || Notification.permission === "granted");
+                    } catch (e) {
+                        permissaoConcedida = (Notification.permission === "granted");
+                    }
+                    resolve();
+                });
+            });
+
+            if (!permissaoConcedida) {
+                alert("Você precisa permitir/ativar as notificações no seu navegador para ser avisado quando a fila liberar!");
+                return;
+            }
+
             document.getElementById('modal-alerta').classList.remove('hidden');
         }
 
@@ -193,7 +222,6 @@
                 atualizarInterface(statusA2, qtdB2);
             } catch (e) {
                 console.error("Erro ao buscar dados da planilha:", e);
-                // Mesmo com erro de requisição, aplica a verificação de horário local
                 atualizarInterface("", 0);
             }
         }
@@ -214,34 +242,32 @@
 
             contador.innerText = isNaN(quantidade) ? 0 : quantidade;
 
-            // Verificação de Horário e Dia
             const agora = new Date();
-            const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+            const diaSemana = agora.getDay();
             const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
 
-            const minAbertura = 9 * 60 + 30; // 09:30 -> 570 minutos
-            const minFechamentoSemana = 18 * 60 + 30; // 18:30 -> 1110 minutos
-            const minFechamentoSabado = 20 * 60; // 20:00 -> 1200 minutos
+            const minAbertura = 9 * 60 + 30;
+            const minFechamentoSemana = 18 * 60 + 30;
+            const minFechamentoSabado = 20 * 60;
 
             let estaFechado = false;
             let motivoFechado = "";
 
-            if (diaSemana === 0) { // DOMINGO
+            if (diaSemana === 0) {
                 estaFechado = true;
                 motivoFechado = "domingo";
-            } else if (diaSemana >= 1 && diaSemana <= 5) { // SEGUNDA A SEXTA
+            } else if (diaSemana >= 1 && diaSemana <= 5) {
                 if (minutosAtuais < minAbertura || minutosAtuais >= minFechamentoSemana) {
                     estaFechado = true;
                     motivoFechado = minutosAtuais >= minFechamentoSemana ? "faculdade" : "fora_horario";
                 }
-            } else if (diaSemana === 6) { // SÁBADO
+            } else if (diaSemana === 6) {
                 if (minutosAtuais < minAbertura || minutosAtuais >= minFechamentoSabado) {
                     estaFechado = true;
                     motivoFechado = "fora_horario";
                 }
             }
 
-            // Oculta todas as seções inicialmente
             stateOpen.classList.add('hidden');
             stateOpen.classList.remove('flex');
             stateLunch.classList.add('hidden');
@@ -250,7 +276,6 @@
             stateClosed.classList.remove('flex');
 
             if (estaFechado) {
-                // Esconde botão de alerta quando fechado
                 btnAlerta.classList.add('hidden');
                 stateClosed.classList.remove('hidden');
                 stateClosed.classList.add('flex');
@@ -273,7 +298,7 @@
                     closedBadgeText.innerText = "Voltamos amanhã às 09:30!";
                     btnAcai.classList.add('hidden');
                     btnAcai.classList.remove('flex');
-                } else { // fora_horario
+                } else {
                     closedIconContainer.className = "bg-red-500/30 p-4 rounded-full mb-3 border border-red-500/40 backdrop-blur-sm";
                     closedIcon.className = "ph ph-door-closed text-5xl text-red-400 drop-shadow-md";
                     closedTitle.innerText = "Barbearia Fechada";
@@ -284,7 +309,6 @@
                     btnAcai.classList.remove('flex');
                 }
             } else {
-                // Durante horário aberto, verifica se está em horário de Almoço na planilha
                 btnAlerta.classList.remove('hidden');
 
                 if (status.includes("almoc") || status.includes("almoço")) {
@@ -307,12 +331,12 @@
                 return;
             }
 
-            let oneSignalId = "";
-            try {
-                window.OneSignalDeferred.push(async function(OneSignal) {
-                    oneSignalId = await OneSignal.User.PushSubscription.id || "Não registrado";
-                });
-            } catch(e) { }
+            const oneSignalId = await obterPushIdOneSignal();
+
+            if (!oneSignalId || Notification.permission !== "granted") {
+                alert("Ativação de notificações obrigatória! Ative as permissões de notificação do seu navegador para continuar.");
+                return;
+            }
 
             const dadosLog = {
                 action: "salvarLog",
@@ -335,7 +359,6 @@
             }
         }
 
-        // Relógio e Data em tempo real
         setInterval(() => {
             const agora = new Date();
             const horas = String(agora.getHours()).padStart(2, '0');
@@ -346,10 +369,7 @@
             document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR', opcoesData).toUpperCase();
         }, 1000);
 
-        // Executa a busca imediatamente ao abrir a página
         buscarStatusPlanilha();
-
-        // Atualização contínua a cada 3 segundos
         setInterval(buscarStatusPlanilha, 3000);
     </script>
 </body>
